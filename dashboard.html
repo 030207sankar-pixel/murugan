@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Register</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        header {
+            background: #1e3a8a;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        nav {
+            background: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        nav a {
+            margin: 0 12px;
+            color: #1d4ed8;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 25px auto;
+            padding: 15px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 12px #00000010;
+        }
+
+        input, select, button {
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .table-wrap { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            min-width: 700px;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: center;
+        }
+
+        th { background: #eff6ff; }
+
+        td:nth-child(2) { text-align: left; }
+
+        .message {
+            background: #dcfce7;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .save-btn {
+            margin-top: 20px;
+            padding: 12px 25px;
+        }
+
+        .date-form {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        @media (max-width: 600px) {
+            header h1 { font-size: 22px; }
+            nav a { display: inline-block; margin: 6px; }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>Smart Attendance Management System</h1>
+    <p>Attendance Register</p>
+</header>
+
+<nav>
+    <a href="/students">Registration</a>
+    <a href="/attendance">Attendance</a>
+    <a href="/dashboard">Dashboard</a>
+</nav>
+
+<div class="container">
+
+    <div class="card">
+        <h2>Select Attendance Date</h2>
+
+        <form method="GET" action="/attendance" class="date-form">
+            <label for="date">Date:</label>
+            <input
+                type="date"
+                id="date"
+                name="date"
+                value="{{ date }}"
+                required
+            >
+            <button type="submit">Load Attendance</button>
+        </form>
+    </div>
+
+    <div class="card">
+        <h2>Mark Attendance</h2>
+
+        {% with messages = get_flashed_messages() %}
+            {% for message in messages %}
+                <div class="message">{{ message }}</div>
+            {% endfor %}
+        {% endwith %}
+
+        {% if students %}
+
+        <form method="POST" action="/attendance">
+
+            <input
+                type="hidden"
+                name="attendance_date"
+                id="attendance_date"
+                value="{{ date }}"
+                required
+            >
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Roll Number</th>
+                            <th>Student Name</th>
+                            <th>Period 1</th>
+                            <th>Period 2</th>
+                            <th>Period 3</th>
+                            <th>Period 4</th>
+                            <th>Period 5</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>{{ student.roll_number }}</td>
+                            <td>{{ student.student_name }}</td>
+
+                            {% for i in range(1, 6) %}
+                            <td>
+                                <select name="{{ student.roll_number }}_p{{ i }}" required>
+                                    <option value="">Select</option>
+
+                                    <option value="C"
+                                    {% if student['period' ~ i] == 'C' %}selected{% endif %}>
+                                        C
+                                    </option>
+
+                                    <option value="A"
+                                    {% if student['period' ~ i] == 'A' %}selected{% endif %}>
+                                        A
+                                    </option>
+                                </select>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <button type="submit" class="save-btn">Save Attendance</button>
+        </form>
+
+        {% else %}
+            <p>No students registered yet. Register students first.</p>
+        {% endif %}
+    </div>
+
+</div>
+
+<script>
+    const dateInput = document.getElementById("date");
+    const hiddenDate = document.getElementById("attendance_date");
+
+    if (dateInput && hiddenDate) {
+        if (!dateInput.value) {
+            dateInput.value = new Date().toLocaleDateString("en-CA");
+        }
+
+        hiddenDate.value = dateInput.value;
+
+        dateInput.addEventListener("change", function () {
+            hiddenDate.value = this.value;
+        });
+    }
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance Dashboard</title>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        header {
+            background: #1e3a8a;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        nav {
+            background: white;
+            padding: 15px;
+            text-align: center;
+        }
+
+        nav a {
+            margin: 0 12px;
+            color: #1d4ed8;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 30px auto;
+            padding: 15px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            padding: 22px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #00000010;
+        }
+
+        .number {
+            font-size: 30px;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        .table-wrap { overflow-x: auto; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 450px;
+        }
+
+        th, td {
+            padding: 14px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th { background: #eff6ff; }
+
+        .low { color: #dc2626; }
+        .black { color: #111827; }
+        .green { color: #16a34a; }
+        .yellow { color: #ca8a04; }
+        .neutral { color: #334155; }
+
+        @media (max-width: 600px) {
+            header h1 { font-size: 22px; }
+            nav a { display: inline-block; margin: 6px; }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>Smart Attendance Management System</h1>
+    <p>Dashboard</p>
+</header>
+
+<nav>
+    <a href="/students">Registration</a>
+    <a href="/attendance">Attendance</a>
+    <a href="/dashboard">Dashboard</a>
+</nav>
+
+<div class="container">
+
+    <h2>Attendance Overview</h2>
+
+    <div class="cards">
+        <div class="card">
+            <h3>Registered Students</h3>
+            <div class="number">{{ students|length }}</div>
+        </div>
+
+        <div class="card">
+            <h3>Completed Days</h3>
+            <div class="number">{{ completed_days }}</div>
+        </div>
+
+        <div class="card">
+            <h3>Remaining Days</h3>
+            <div class="number">{{ remaining_days }}</div>
+        </div>
+
+        <div class="card">
+            <h3>Total Working Days</h3>
+            <div class="number">90</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Student Attendance Percentage</h2>
+
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Student Name</th>
+                        <th>Roll Number</th>
+                        <th>Present Periods</th>
+                        <th>Attendance Percentage</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for student in students %}
+                    {% set total = student.total_periods or 0 %}
+                    {% set present = student.present_periods or 0 %}
+
+                    {% if total > 0 %}
+                        {% set percentage = (present / total * 100) | round(1) %}
+                    {% else %}
+                        {% set percentage = none %}
+                    {% endif %}
+
+                    {% if percentage is none %}
+                        {% set color = 'neutral' %}
+                    {% elif percentage < 20 %}
+                        {% set color = 'low' %}
+                    {% elif percentage < 40 %}
+                        {% set color = 'black' %}
+                    {% elif percentage < 60 %}
+                        {% set color = 'green' %}
+                    {% elif percentage < 80 %}
+                        {% set color = 'black' %}
+                    {% elif percentage <= 90 %}
+                        {% set color = 'yellow' %}
+                    {% else %}
+                        {% set color = 'neutral' %}
+                    {% endif %}
+
+                    <tr>
+                        <td class="{{ color }}">
+                            {{ student.student_name }}
+                        </td>
+
+                        <td>{{ student.roll_number }}</td>
+
+                        <td>
+                            {% if total > 0 %}
+                                {{ present }} / {{ total }}
+                            {% else %}
+                                Not Recorded
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if percentage is not none %}
+                                {{ percentage }}%
+                            {% else %}
+                                Not Recorded
+                            {% endif %}
+                        </td>
+                    </tr>
+
+                    {% else %}
+                    <tr>
+                        <td colspan="4">No students registered yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
